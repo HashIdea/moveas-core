@@ -55,7 +55,10 @@ module sas::attestation_registry {
     }
 
     // === Public-Mutative Functions ===
-    public fun registry(self: &mut AttestationRegistry, attestation: address, schema_address: address) {
+
+    // === Public-Package Functions ===
+    
+    public(package) fun registry(self: &mut AttestationRegistry, attestation: address, schema_address: address) {
         let inner = self.load_inner_mut();
         assert!(!inner.attestations_status.contains(attestation), EAttestationNotFound);
         table::add(&mut inner.attestations_status, attestation, Status {
@@ -65,12 +68,12 @@ module sas::attestation_registry {
         });
     }
 
-    public fun revoke(
-        admin: &Admin,
+    public(package) fun revoke(
         self: &mut AttestationRegistry,
-        schema_record: &mut Schema,
+        admin: &Admin,
+        schema_record: &Schema,
         attestation: address,
-        ctx: &mut TxContext
+        ctx: &TxContext
     ) {
         admin.assert_schema(schema_record.addy());
         assert!(self.is_exist(attestation), EAttestationNotFound);
@@ -87,7 +90,6 @@ module sas::attestation_registry {
         status.timestamp = ctx.epoch_timestamp_ms();
     }
 
-    // === Public-Package Functions ===
     public(package) fun load_inner_mut(self: &mut AttestationRegistry): &mut RegistryInner {
         let inner: &mut RegistryInner = versioned::load_value_mut(&mut self.inner);
         let package_version = constants::current_version();

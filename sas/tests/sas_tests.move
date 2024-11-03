@@ -5,9 +5,10 @@ module sas::sas_tests {
         test_scenario::{Self},
         clock::{Self}
     };
-    use sas::sas::{Self, Attestation};
+    use sas::sas::{Self};
     use sas::schema::{Self, Schema, ResolverBuilder};
     use sas::schema_registry::{Self, SchemaRegistry};
+    use sas::attestation::{Self, Attestation};
     use sas::attestation_registry::{Self, AttestationRegistry};
     use sas::admin::{Admin};
 
@@ -42,7 +43,7 @@ module sas::sas_tests {
         test_scenario::next_tx(&mut scenario, admin);
         {   
             let mut schema_registry = test_scenario::take_shared<SchemaRegistry>(&scenario);
-            let admin_cap = schema::new(
+            let admin_cap = sas::register_schema(
                 &mut schema_registry, 
                 schema, 
                 name, 
@@ -86,7 +87,7 @@ module sas::sas_tests {
         {
             let schema_record = test_scenario::take_shared<Schema>(&scenario);
             let attestation = test_scenario::take_from_sender<Attestation>(&scenario);
-            assert!(sas::schema(&attestation) == schema_record.addy());
+            assert!(attestation::schema(&attestation) == schema_record.addy());
             attestation_address = object::id_address(&attestation);
             
             test_scenario::return_shared<Schema>(schema_record);
@@ -97,12 +98,12 @@ module sas::sas_tests {
         test_scenario::next_tx(&mut scenario, admin);
         {
             let mut attestation_registry = test_scenario::take_shared<AttestationRegistry>(&scenario);
-            let mut schema_record = test_scenario::take_shared<Schema>(&scenario);
+            let schema_record = test_scenario::take_shared<Schema>(&scenario);
             let admin_cap = test_scenario::take_from_sender<Admin>(&scenario);
-            attestation_registry::revoke(
+            sas::revoke(
                 &admin_cap, 
                 &mut attestation_registry, 
-                &mut schema_record, 
+                &schema_record, 
                 attestation_address, 
                 test_scenario::ctx(&mut scenario)
             );
@@ -144,7 +145,7 @@ module sas::sas_tests {
         test_scenario::next_tx(&mut scenario, admin);
         {
             let mut schema_registry = test_scenario::take_shared<SchemaRegistry>(&scenario);
-            let (builder, admin_cap) = schema::new_with_resolver(
+            let (builder, admin_cap) = sas::register_schema_with_resolver(
                 &mut schema_registry, 
                 schema, 
                 name, 
@@ -196,7 +197,7 @@ module sas::sas_tests {
         {
             let schema_record = test_scenario::take_shared<Schema>(&scenario);
             let attestation = test_scenario::take_from_sender<Attestation>(&scenario);
-            assert!(sas::schema(&attestation) == schema_record.addy());
+            assert!(attestation::schema(&attestation) == schema_record.addy());
 
             test_scenario::return_shared<Schema>(schema_record);
             test_scenario::return_to_sender<Attestation>(&scenario, attestation);

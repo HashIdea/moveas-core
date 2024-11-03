@@ -20,7 +20,7 @@ module aas::schema {
     struct Schema has key {
         name: String,
         description: String,
-        uri: String,
+        url: String,
         creator: address,
         created_at: u64,
         schema: vector<u8>,
@@ -32,7 +32,7 @@ module aas::schema {
     struct SchemaData {
         name: String,
         description: String,
-        uri: String,
+        url: String,
         creator: address,
         created_at: u64,
         schema: vector<u8>,
@@ -54,7 +54,7 @@ module aas::schema {
         schema_address: address,
         name: String,
         description: String,
-        uri: String,
+        url: String,
         creator: address,
         created_at: u64,
         revokable: bool,
@@ -68,12 +68,12 @@ module aas::schema {
         creator: address,
         name: String,
         description: String,
-        uri: String,
+        url: String,
         revokable: bool,
         resolver: address,
         schema: vector<u8>
     ): address {
-        let seeds = get_schema_seeds(name, description, uri, revokable, resolver, schema);
+        let seeds = get_schema_seeds(name, description, url, revokable, resolver, schema);
         let constructor_ref = object::create_named_object(&package_manager::get_signer(), seeds);
         let object_signer = &object::generate_signer(&constructor_ref);
       
@@ -82,7 +82,7 @@ module aas::schema {
         move_to(object_signer, Schema {
             name: name,
             description: description,
-            uri: uri,
+            url: url,
             creator: creator,
             created_at: now,
             schema: schema,
@@ -99,7 +99,7 @@ module aas::schema {
                 schema_address: object::object_address<Schema>(&schema_object),
                 name: name,
                 description: description,
-                uri: uri,
+                url: url,
                 creator: creator,
                 created_at: now,
                 schema: schema,
@@ -119,7 +119,7 @@ module aas::schema {
         SchemaData {
             name: schema.name,
             description: schema.description,
-            uri: schema.uri,
+            url: schema.url,
             creator: schema.creator,
             created_at: schema.created_at,
             schema: schema.schema,
@@ -144,7 +144,7 @@ module aas::schema {
         (
             schema.name, 
             schema.description, 
-            schema.uri, 
+            schema.url, 
             schema.creator, 
             schema.created_at, 
             schema.schema, 
@@ -174,12 +174,12 @@ module aas::schema {
     public fun get_schema_address(
         name: String, 
         description: String, 
-        uri: String, 
+        url: String, 
         revokable: bool, 
         resolver: address, 
         schema: vector<u8>
     ): address {
-        let seeds = get_schema_seeds(name, description, uri, revokable, resolver, schema);
+        let seeds = get_schema_seeds(name, description, url, revokable, resolver, schema);
         object::create_object_address(&package_manager::get_signer_address(), seeds)
     }
 
@@ -187,7 +187,7 @@ module aas::schema {
     public fun get_schema_seeds(
         name: String, 
         description: String, 
-        uri: String, 
+        url: String, 
         revokable: bool, 
         resolver: address,
         schema: vector<u8>
@@ -195,7 +195,7 @@ module aas::schema {
         let seed = vector::empty();
         vector::append(&mut seed, bcs::to_bytes(&name));
         vector::append(&mut seed, bcs::to_bytes(&description));
-        vector::append(&mut seed, bcs::to_bytes(&uri));
+        vector::append(&mut seed, bcs::to_bytes(&url));
         vector::append(&mut seed, bcs::to_bytes(&revokable));
         vector::append(&mut seed, bcs::to_bytes(&resolver));
         vector::append(&mut seed, schema);

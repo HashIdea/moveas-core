@@ -24,11 +24,11 @@ module aas::aas {
         schema: vector<u8>, 
         name: String, 
         description: String, 
-        uri: String, 
+        url: String, 
         revokable: bool,
         resolver: address,
     ) {
-        create_schema_and_get_schema_address(creator, schema, name, description, uri, revokable, resolver);
+        create_schema_and_get_schema_address(creator, schema, name, description, url, revokable, resolver);
     }
 
     /// Create a new attestation
@@ -67,15 +67,15 @@ module aas::aas {
         schema: vector<u8>, 
         name: String, 
         description: String, 
-        uri: String, 
+        url: String, 
         revokable: bool,
         resolver: address,
     ): address {
         assert!(string::length(&name) < 128, error::invalid_argument(ESTRING_TOO_LONG));
         assert!(string::length(&description) < 512, error::invalid_argument(ESTRING_TOO_LONG));
-        assert!(string::length(&uri) < 512, error::invalid_argument(ESTRING_TOO_LONG));
+        assert!(string::length(&url) < 512, error::invalid_argument(ESTRING_TOO_LONG));
 
-        schema::create_schema(signer::address_of(creator), name, description, uri, revokable, resolver, schema)
+        schema::create_schema(signer::address_of(creator), name, description, url, revokable, resolver, schema)
     }
 
     public fun create_attestation_and_get_address(

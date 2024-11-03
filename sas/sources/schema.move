@@ -34,6 +34,7 @@ module sas::schema {
         created_at: u64,
         schema: vector<u8>,
         revokable: bool,
+        admin_cap: address
     }
 
     // ==== Constants ====
@@ -189,7 +190,8 @@ module sas::schema {
                 creator: schema_record.creator,
                 created_at: schema_record.created_at,
                 schema: schema_record.schema,
-                revokable: schema_record.revokable
+                revokable: schema_record.revokable,
+                admin_cap: @0x0
             }
         );
 
@@ -221,6 +223,12 @@ module sas::schema {
         };
 
         schema_registry.registry(schema_record.addy(), ctx);
+
+        let admin_cap = admin::new(schema_record.addy(), ctx);
+        let resolver_builder = new_resolver_builder(&admin_cap, &schema_record, ctx);
+
+        let admin_address = object::id_address(&schema_record);
+
         emit(
             SchemaCreated {
                 event_type: 1,
@@ -232,11 +240,9 @@ module sas::schema {
                 created_at: schema_record.created_at,
                 schema: schema_record.schema,
                 revokable: schema_record.revokable,
+                admin_cap: admin_address
             }
         );
-        
-        let admin_cap = admin::new(schema_record.addy(), ctx);
-        let resolver_builder = new_resolver_builder(&admin_cap, &schema_record, ctx);
         
         transfer::share_object(schema_record);
         
