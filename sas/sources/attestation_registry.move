@@ -6,7 +6,7 @@ module sas::attestation_registry {
     };
     use sas::constants;
     use sas::admin::{Admin};
-    use sas::schema::{SchemaRecord};
+    use sas::schema::{Schema};
 
     // === Errors ===
     const EAttestationNotFound: u64 = 0;
@@ -68,7 +68,7 @@ module sas::attestation_registry {
     public fun revoke(
         admin: &Admin,
         self: &mut AttestationRegistry,
-        schema_record: &mut SchemaRecord,
+        schema_record: &mut Schema,
         attestation: address,
         ctx: &mut TxContext
     ) {

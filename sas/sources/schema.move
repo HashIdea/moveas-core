@@ -1,11 +1,12 @@
 module sas::schema {
     // === Imports ===
     use std::{
-        string::{String}, 
+        string::{Self, String}, 
         type_name::{Self, TypeName}
     };
     use sui::{
         bag::{Self, Bag},
+        url::{Self, Url},
         vec_map::{Self, VecMap},
         vec_set::{Self, VecSet},
         event::{emit},
@@ -21,31 +22,33 @@ module sas::schema {
 
 
     // ==== Events ====
+    /// emitted when a schema is created
     public struct SchemaCreated has copy, drop {
         /// 0: SchemaCreated, 1: SchemaCreatedWithResolver
-        event_type: u8,
-        incrementing_id: u64,
-        label: String,
+        event_type: u8,        
         schema_address: address,
+        name: String,
+        description: String,
+        url: Url,
         creator: address,
         created_at: u64,
-        tx_hash: vector<u8>,
         schema: vector<u8>,
-        revokable: bool
+        revokable: bool,
     }
 
     // ==== Constants ====
     const START_ATTEST: vector<u8> = b"START_ATTEST";
 
     // ==== Structs ====
-    public struct SchemaRecord has key, store {
+    
+    /// Schema struct to store schema data
+    public struct Schema has key, store {
         id: UID,
-        incrementing_id: u64,
-        attestation_cnt: u64,
-        label: String,
+        name: String,
+        description: String,
+        url: Url,
         creator: address,
         created_at: u64,
-        tx_hash: vector<u8>,
         schema: vector<u8>,
         revokable: bool,
         resolver: Option<Resolver>
@@ -69,14 +72,14 @@ module sas::schema {
     }
   
     // === Public-Mutative Functions ===
-    public fun start_attest(self: &SchemaRecord): Request {
+    public fun start_attest(self: &Schema): Request {
         assert!(self.has_resolver(), ENoResolver);  
         new_request(self, START_ATTEST.to_string())
     }
 
-    public fun finish_attest(self: &SchemaRecord, request: Request) {
+    public fun finish_attest(self: &Schema, request: Request) {
         assert!(self.has_resolver(), ENoResolver);
-        assert!(request.name() == START_ATTEST.to_string(), EMustBeFinishRequest);
+        assert!(request.request_name() == START_ATTEST.to_string(), EMustBeFinishRequest);
 
         self.confirm(request);
     }
@@ -86,45 +89,45 @@ module sas::schema {
         START_ATTEST
     }
 
-    public fun schema(self: &SchemaRecord): vector<u8> {
+    public fun schema(self: &Schema): vector<u8> {
         self.schema
     }
 
-    public fun label(self: &SchemaRecord): String {
-        self.label
+    public fun name(self: &Schema): String {
+        self.name
     }
 
-    public fun created_at(self: &SchemaRecord): u64 {
+    public fun description(self: &Schema): String {
+        self.description
+    }
+
+    public fun url(self: &Schema): Url {
+        self.url
+    }
+
+    public fun created_at(self: &Schema): u64 {
         self.created_at
     }
 
-    public fun tx_hash(self: &SchemaRecord): vector<u8> {
-        self.tx_hash
-    }
-
-    public fun incrementing_id(self: &SchemaRecord): u64 {
-        self.incrementing_id
-    }
-
-    public fun creator(self: &SchemaRecord): address {
+    public fun creator(self: &Schema): address {
         self.creator
     }
 
-    public fun revokable(self: &SchemaRecord): bool {
+    public fun revokable(self: &Schema): bool {
         self.revokable
     }
 
-    public fun addy(self: &SchemaRecord): address {
+    public fun addy(self: &Schema): address {
         self.id.to_address()
     }
 
     public fun config<Rule: drop, Config: store>(
-        self: &SchemaRecord
+        self: &Schema
     ): &Config {
         self.resolver.borrow().config.borrow(type_name::get<Rule>())
     }
 
-    public fun has_resolver(self: &SchemaRecord): bool {
+    public fun has_resolver(self: &Schema): bool {
         option::is_some(&self.resolver)
     }
 
@@ -132,7 +135,7 @@ module sas::schema {
         request.schema_address
     }
 
-    public fun name(request: &Request): String {
+    public fun request_name(request: &Request): String {
         request.name
     }
 
@@ -153,21 +156,23 @@ module sas::schema {
     }
 
     // === Public Functions ===
+    /// Create a new schema
     public fun new(
         schema_registry: &mut SchemaRegistry, 
         schema: vector<u8>, 
-        label: String,
+        name: vector<u8>,
+        description: vector<u8>,
+        url: vector<u8>,
         revokable: bool,
         ctx: &mut TxContext
         ): Admin {
-        let schema_record = SchemaRecord {
+        let schema_record = Schema {
             id: object::new(ctx),
-            incrementing_id: schema_registry.size() + 1,
-            attestation_cnt: 0,
-            label: label,
+            name: string::utf8(name),
+            description: string::utf8(description),
+            url: url::new_unsafe_from_bytes(url),
             creator: ctx.sender(),
             created_at: ctx.epoch_timestamp_ms(),
-            tx_hash: *ctx.digest(),
             schema: schema,
             revokable: revokable,
             resolver: option::none()
@@ -177,12 +182,12 @@ module sas::schema {
         emit(
             SchemaCreated {
                 event_type: 0,
-                incrementing_id: schema_record.incrementing_id,
-                label: schema_record.label,
                 schema_address: schema_record.addy(),
+                name: schema_record.name,
+                description: schema_record.description,
+                url: schema_record.url,
                 creator: schema_record.creator,
                 created_at: schema_record.created_at,
-                tx_hash: schema_record.tx_hash,
                 schema: schema_record.schema,
                 revokable: schema_record.revokable
             }
@@ -197,18 +202,19 @@ module sas::schema {
     public fun new_with_resolver(
         schema_registry: &mut SchemaRegistry,
         schema: vector<u8>,
-        label: String,
+        name: vector<u8>,
+        description: vector<u8>,
+        url: vector<u8>,
         revokable: bool,
         ctx: &mut TxContext,
     ): (ResolverBuilder, Admin) {
-        let schema_record = SchemaRecord {
+        let schema_record = Schema {
             id: object::new(ctx),
-            incrementing_id: schema_registry.size() + 1,
-            attestation_cnt: 0,
-            label: label,
+            name: string::utf8(name),
+            description: string::utf8(description),
+            url: url::new_unsafe_from_bytes(url),
             creator: ctx.sender(),
             created_at: ctx.epoch_timestamp_ms(),
-            tx_hash: *ctx.digest(),
             schema: schema,
             revokable: revokable,
             resolver: option::none()
@@ -218,14 +224,14 @@ module sas::schema {
         emit(
             SchemaCreated {
                 event_type: 1,
-                incrementing_id: schema_record.incrementing_id,
-                label: schema_record.label,
                 schema_address: schema_record.addy(),
+                name: schema_record.name,
+                description: schema_record.description,
+                url: schema_record.url,
                 creator: schema_record.creator,
                 created_at: schema_record.created_at,
-                tx_hash: schema_record.tx_hash,
                 schema: schema_record.schema,
-                revokable: schema_record.revokable
+                revokable: schema_record.revokable,
             }
         );
         
@@ -241,7 +247,7 @@ module sas::schema {
     }
 
     public fun add_resolver(
-        schema_record: &mut SchemaRecord,
+        schema_record: &mut Schema,
         resolver_builder: ResolverBuilder
     ) {
         let ResolverBuilder { rules, config, schema_address } = resolver_builder;
@@ -252,7 +258,7 @@ module sas::schema {
         });
     }
 
-    public fun new_request(self: &SchemaRecord, name: String): Request {
+    public fun new_request(self: &Schema, name: String): Request {
         Request {
             name: name,
             schema_address: object::id_address(self),
@@ -263,7 +269,7 @@ module sas::schema {
     // === Admin Functions ===
     public fun new_resolver_builder(
         admin: &Admin,
-        schema_record: &SchemaRecord,
+        schema_record: &Schema,
         ctx: &mut TxContext
     ): ResolverBuilder {
         admin.assert_schema(schema_record.addy());
@@ -278,12 +284,9 @@ module sas::schema {
     }
 
     // === Public-Package Functions ===
-    public(package) fun update_attestation_cnt(self: &mut SchemaRecord) {
-        self.attestation_cnt = self.attestation_cnt + 1;
-    }
 
     // === Private Functions ===
-    fun confirm(self: &SchemaRecord, request: Request) {
+    fun confirm(self: &Schema, request: Request) {
         let resolver = self.resolver.borrow();
         let Request { name, schema_address, approvals } = request;
 
@@ -319,7 +322,7 @@ module sas::schema {
     }
 
     public fun config_mut<Rule: drop, Config: store>(
-        self: &mut SchemaRecord
+        self: &mut Schema
     ): &mut Config {
         self.resolver.borrow_mut().config.borrow_mut(type_name::get<Rule>())
     }

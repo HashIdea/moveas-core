@@ -35,6 +35,6 @@ published-version = "1"
 
 [env.baku]
 chain-id = "db4b6646"
-original-published-id = "0xb77e02da62e9bba4833029ccf13aea70ac2904b3fc9c49f0e4b1c79b4b903cbd"
-latest-published-id = "0xb77e02da62e9bba4833029ccf13aea70ac2904b3fc9c49f0e4b1c79b4b903cbd"
+original-published-id = "0x43dbf114371b9b8233a9dac96589d79e3279906cef08ed43e82f9da964b00cf4"
+latest-published-id = "0x43dbf114371b9b8233a9dac96589d79e3279906cef08ed43e82f9da964b00cf4"
 published-version = "1"

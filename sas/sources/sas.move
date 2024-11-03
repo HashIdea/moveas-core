@@ -9,7 +9,7 @@ module sas::sas {
         clock::{Self, Clock},
     };
     use std::string;
-    use sas::schema::{Self, SchemaRecord, Request};
+    use sas::schema::{Self, Schema, Request};
     use sas::attestation_registry::{AttestationRegistry};
 
     // === Errors ===
@@ -18,17 +18,16 @@ module sas::sas {
     const EHasResolver: u64 = 2;
 
     // === Events ===
-    public struct Attest has copy, drop {
+    public struct AttestationCreated has copy, drop {
         /// 0: Attest, 1: AttestWithResolver
         event_type: u8,
         id: address,
         schema: address,
-        ref_id: address,
-        attester: address,
-        tx_hash: vector<u8>,
-        revokable: bool,
+        ref_attestation: address,
         time: u64,
         expireation_time: u64,
+        revokable: bool,
+        attester: address,
         data: vector<u8>,
         name: string::String,
         description: string::String,
@@ -39,12 +38,13 @@ module sas::sas {
     public struct Attestation has key {
         id: UID,
         schema: address,
-        ref_id: address,
-        attester: address,
-        tx_hash: vector<u8>,
+        ref_attestation: address,
         time: u64,
-        revokable: bool,
         expireation_time: u64,
+        // revocation_time: u64,
+        revokable: bool,
+        attester: address,
+        // recipient: address,
         data: vector<u8>,
         name: string::String,
         description: string::String,
@@ -57,16 +57,12 @@ module sas::sas {
         self.schema
     }
 
-    public fun ref_id(self: &Attestation): address {
-        self.ref_id
+    public fun ref_attestation(self: &Attestation): address {
+        self.ref_attestation
     }
 
     public fun attester(self: &Attestation): address {
         self.attester
-    }
-
-    public fun tx_hash(self: &Attestation): vector<u8> {
-        self.tx_hash
     }
 
     public fun time(self: &Attestation): u64 {
@@ -99,9 +95,9 @@ module sas::sas {
 
     // === Public Functions ===
     public fun attest(
-        schema_record: &mut SchemaRecord,
+        schema_record: &mut Schema,
         attestation_registry: &mut AttestationRegistry,
-        ref_id: address,
+        ref_attestation: address,
         recipient: address,
         expireation_time: u64,
         data: vector<u8>,
@@ -112,8 +108,8 @@ module sas::sas {
         ctx: &mut TxContext
     ) {
         assert!(!schema_record.has_resolver(), EHasResolver);
-        if (ref_id != @0x0) {
-            assert!(attestation_registry.is_exist(ref_id), ERefIdNotFound);
+        if (ref_attestation != @0x0) {
+            assert!(attestation_registry.is_exist(ref_attestation), ERefIdNotFound);
         };
         
         let attester = ctx.sender();
@@ -122,17 +118,14 @@ module sas::sas {
             assert!(time.timestamp_ms() < expireation_time, EExpired);
         };
 
-        schema_record.update_attestation_cnt();
-
         let attestation = Attestation {
             id: object::new(ctx),
             schema: object::id_address(schema_record),
+            ref_attestation: ref_attestation,
             time: clock::timestamp_ms(time),
             expireation_time: expireation_time,
             revokable: schema_record.revokable(),
-            ref_id: ref_id,
             attester: attester,
-            tx_hash: *ctx.digest(),
             data: data,
             name: string::utf8(name),
             description: string::utf8(description),
@@ -142,16 +135,15 @@ module sas::sas {
         attestation_registry.registry(object::id_address(&attestation), schema_record.addy());
 
         emit(
-            Attest {
+            AttestationCreated {
                 event_type: 0,
                 id: object::id_address(&attestation),
                 schema: attestation.schema,
-                ref_id: attestation.ref_id,
-                attester: attestation.attester,
-                tx_hash: *ctx.digest(),
-                revokable: attestation.revokable,
+                ref_attestation: attestation.ref_attestation,
                 time: attestation.time,
                 expireation_time: attestation.expireation_time,
+                revokable: attestation.revokable,
+                attester: attestation.attester,
                 data: attestation.data,
                 name: attestation.name,
                 description: attestation.description,
@@ -163,9 +155,9 @@ module sas::sas {
     }
 
     public fun attest_with_resolver(
-        schema_record: &mut SchemaRecord,
+        schema_record: &mut Schema,
         attestation_registry: &mut AttestationRegistry,
-        ref_id: address,
+        ref_attestation: address,
         recipient: address,
         expireation_time: u64,
         data: vector<u8>,
@@ -176,11 +168,9 @@ module sas::sas {
         request: Request,
         ctx: &mut TxContext
     ) {
-        if (ref_id != @0x0) {
-            assert!(attestation_registry.is_exist(ref_id), ERefIdNotFound);
+        if (ref_attestation != @0x0) {
+            assert!(attestation_registry.is_exist(ref_attestation), ERefIdNotFound);
         };
-
-        schema_record.update_attestation_cnt();
 
         let attester = ctx.sender();
 
@@ -193,12 +183,11 @@ module sas::sas {
         let attestation = Attestation {
             id: object::new(ctx),
             schema: object::id_address(schema_record),
+            ref_attestation: ref_attestation,
             time: clock::timestamp_ms(time),
             expireation_time: expireation_time,
-            ref_id: ref_id,
-            attester: attester,
-            tx_hash: *ctx.digest(),
             revokable: schema_record.revokable(),
+            attester: attester,
             data: data,
             name: string::utf8(name),
             description: string::utf8(description),
@@ -206,16 +195,15 @@ module sas::sas {
         };
 
         emit(
-            Attest {
+            AttestationCreated {
                 event_type: 1,
                 id: object::id_address(&attestation),
                 schema: attestation.schema,
-                ref_id: attestation.ref_id,
-                attester: attestation.attester,
-                tx_hash: *ctx.digest(),
-                revokable: attestation.revokable,
+                ref_attestation: attestation.ref_attestation,
                 time: attestation.time,
                 expireation_time: attestation.expireation_time,
+                revokable: attestation.revokable,
+                attester: attestation.attester,
                 data: attestation.data,
                 name: attestation.name,
                 description: attestation.description,
