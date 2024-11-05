@@ -33,7 +33,7 @@ module aas::aas {
 
     /// Create a new attestation
     public entry fun create_attestation(
-        attester: &signer, 
+        attestor: &signer, 
         recipient: address,
         schema_addr: address, 
         ref_attestation: address, 
@@ -41,7 +41,7 @@ module aas::aas {
         revokable: bool, 
         data: vector<u8>
     ) {
-        create_attestation_and_get_address(attester, recipient, schema_addr, ref_attestation, expiration_time, revokable, data);
+        create_attestation_and_get_address(attestor, recipient, schema_addr, ref_attestation, expiration_time, revokable, data);
     }
 
     /// Revoke an attestation
@@ -79,7 +79,7 @@ module aas::aas {
     }
 
     public fun create_attestation_and_get_address(
-        attester: &signer, 
+        attestor: &signer, 
         recipient: address,
         schema_addr: address, 
         ref_attestation: address, 
@@ -90,7 +90,7 @@ module aas::aas {
         assert!(!attestation::attestation_exists(ref_attestation), error::invalid_argument(EATTESTATIONS_NOT_EXIST_AT_ADDRESS));
         assert!(schema::schema_exists(schema_addr), error::invalid_argument(ESCHEMA_NOT_FOUND));
         
-        attestation::create_attestation(signer::address_of(attester), recipient, schema_addr, ref_attestation, expiration_time, revokable, data)
+        attestation::create_attestation(signer::address_of(attestor), recipient, schema_addr, ref_attestation, expiration_time, revokable, data)
     }
 
 }

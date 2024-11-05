@@ -16,7 +16,7 @@ module sas::attestation {
         time: u64,
         expiration_time: u64,
         revokable: bool,
-        attester: address,
+        attestor: address,
         recipient: address,
         data: vector<u8>,
         name: string::String,
@@ -33,7 +33,7 @@ module sas::attestation {
         expiration_time: u64,
         // revocation_time: u64,
         revokable: bool,
-        attester: address,
+        attestor: address,
         // recipient: address,
         data: vector<u8>,
         name: string::String,
@@ -50,8 +50,8 @@ module sas::attestation {
         self.ref_attestation
     }
 
-    public fun attester(self: &Attestation): address {
-        self.attester
+    public fun attestor(self: &Attestation): address {
+        self.attestor
     }
 
     public fun time(self: &Attestation): u64 {
@@ -88,7 +88,7 @@ module sas::attestation {
         time: u64,
         expiration_time: u64,
         revokable: bool,
-        attester: address,
+        attestor: address,
         recipient: address,
         data: vector<u8>,
         name: string::String,
@@ -105,7 +105,7 @@ module sas::attestation {
             time,
             expiration_time,
             revokable,
-            attester,
+            attestor,
             data,
             name,
             description,
@@ -124,7 +124,7 @@ module sas::attestation {
             time,
             expiration_time,
             revokable,
-            attester,
+            attestor,
             recipient,
             data,
             name,

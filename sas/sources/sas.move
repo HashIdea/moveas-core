@@ -83,7 +83,7 @@ module sas::sas {
             assert!(attestation_registry.is_exist(ref_attestation), ERefIdNotFound);
         };
         
-        let attester = ctx.sender();
+        let attestor = ctx.sender();
 
         if (expiration_time != 0) {
             assert!(time.timestamp_ms() < expiration_time, EExpired);
@@ -95,7 +95,7 @@ module sas::sas {
             clock::timestamp_ms(time),
             expiration_time,
             schema_record.revokable(),
-            attester,
+            attestor,
             recipient,
             data,
             string::utf8(name),
@@ -126,7 +126,7 @@ module sas::sas {
             assert!(attestation_registry.is_exist(ref_attestation), ERefIdNotFound);
         };
 
-        let attester = ctx.sender();
+        let attestor = ctx.sender();
 
         if (expiration_time != 0) {
             assert!(time.timestamp_ms() < expiration_time, EExpired);
@@ -140,7 +140,7 @@ module sas::sas {
             clock::timestamp_ms(time),
             expiration_time,
             schema_record.revokable(),
-            attester,
+            attestor,
             recipient,
             data,
             string::utf8(name),

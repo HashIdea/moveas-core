@@ -22,7 +22,7 @@ module aas::attestation {
         expiration_time: u64,
         revocation_time: u64,
         revokable: bool,
-        attester: address,
+        attestor: address,
         recipient: address,
         data: vector<u8>,
         tx_hash: vector<u8>,
@@ -35,7 +35,7 @@ module aas::attestation {
         expiration_time: u64,
         revocation_time: u64,
         revokable: bool,
-        attester: address,
+        attestor: address,
         recipient: address,
         data: vector<u8>,
     }
@@ -49,7 +49,7 @@ module aas::attestation {
         time: u64,
         expiration_time: u64,
         revokable: bool,
-        attester: address,
+        attestor: address,
         recipient: address,
         data: vector<u8>,
     }
@@ -64,7 +64,7 @@ module aas::attestation {
     /*********** Public Friend Functions ***********/
 
     public(friend) fun create_attestation(
-        attester: address, 
+        attestor: address, 
         recipient: address,
         schema_addr: address, 
         ref_attestation: address, 
@@ -73,7 +73,7 @@ module aas::attestation {
         data: vector<u8>
     ): address {
         let now = timestamp::now_seconds();
-        let seeds = get_attestation_seeds(attester, schema_addr, recipient, ref_attestation, expiration_time, revokable, now, data);
+        let seeds = get_attestation_seeds(attestor, schema_addr, recipient, ref_attestation, expiration_time, revokable, now, data);
         let constructor_ref = object::create_named_object(&package_manager::get_signer(), seeds);
         let object_signer = &object::generate_signer(&constructor_ref);
 
@@ -84,7 +84,7 @@ module aas::attestation {
             expiration_time: expiration_time,
             revokable: revokable,
             revocation_time: 0,
-            attester: attester,
+            attestor: attestor,
             recipient: recipient,
             data: data,
             tx_hash: vector::empty(),
@@ -100,7 +100,7 @@ module aas::attestation {
                 time: now,
                 expiration_time: expiration_time,
                 revokable: revokable,
-                attester: attester,
+                attestor: attestor,
                 recipient: recipient,
                 data: data,
             }
@@ -134,7 +134,7 @@ module aas::attestation {
             expiration_time: attestation.expiration_time,
             revocation_time: attestation.revocation_time,
             revokable: attestation.revokable,
-            attester: attestation.attester,
+            attestor: attestation.attestor,
             recipient: attestation.recipient,
             data: attestation.data,
         }
@@ -160,7 +160,7 @@ module aas::attestation {
             attestation.expiration_time,
             attestation.revocation_time,
             attestation.revokable,
-            attestation.attester,
+            attestation.attestor,
             attestation.recipient,
             attestation.data,
         )
@@ -173,7 +173,7 @@ module aas::attestation {
 
     #[view]
     public fun get_attestation_address(
-        attester: address, 
+        attestor: address, 
         schema: address, 
         recipient: address, 
         ref_id: address, 
@@ -182,13 +182,13 @@ module aas::attestation {
         now: u64, 
         data: vector<u8>
     ): address {
-        let seeds = get_attestation_seeds(attester, schema, recipient, ref_id, expiration_time, revokable, now, data);
+        let seeds = get_attestation_seeds(attestor, schema, recipient, ref_id, expiration_time, revokable, now, data);
         object::create_object_address(&package_manager::get_signer_address(), seeds)
     }
 
     #[view]
     public fun get_attestation_seeds(
-        attester: address, 
+        attestor: address, 
         schema: address, 
         recipient: address, 
         ref_id: address, 
@@ -197,7 +197,7 @@ module aas::attestation {
         now: u64, 
         data: vector<u8>
     ): vector<u8> {
-        let seed = bcs::to_bytes(&attester);
+        let seed = bcs::to_bytes(&attestor);
         vector::append(&mut seed, bcs::to_bytes(&schema));
         vector::append(&mut seed, bcs::to_bytes(&recipient));
         vector::append(&mut seed, bcs::to_bytes(&ref_id));
