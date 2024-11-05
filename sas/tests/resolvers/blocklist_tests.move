@@ -4,11 +4,11 @@ module sas::blocklist_tests {
         test_scenario::{Self},
         clock::{Self}
     };
-    use std::string::{Self, String};
-    use sas::sas::{Self, Attestation};
-    use sas::schema::{Self, SchemaRecord, ResolverBuilder};
+    use sas::sas::{Self};
+    use sas::schema::{Schema, ResolverBuilder};
     use sas::blocklist::{Self};
     use sas::schema_registry::{Self, SchemaRegistry};
+    use sas::attestation::{Self, Attestation};
     use sas::attestation_registry::{Self, AttestationRegistry};
     use sas::admin::{Admin};
 
@@ -18,7 +18,6 @@ module sas::blocklist_tests {
         let bob: address = @0x2;
         let cathrine: address = @0x3;
 
-        let label: String = string::utf8(b"Profile");
         let schema: vector<u8> = b"name: string, age: u64";
         let data: vector<u8> = b"alice, 100";
         let name: vector<u8> = b"Profile";
@@ -35,7 +34,15 @@ module sas::blocklist_tests {
         test_scenario::next_tx(&mut scenario, alice);
         {
             let mut schema_registry = test_scenario::take_shared<SchemaRegistry>(&scenario);
-            let (builder, admin_cap) = schema::new_with_resolver(&mut schema_registry, schema, label, false, test_scenario::ctx(&mut scenario));
+            let (builder, admin_cap) = sas::register_schema_with_resolver(
+                &mut schema_registry, 
+                schema, 
+                name, 
+                description, 
+                url, 
+                false, 
+                test_scenario::ctx(&mut scenario)
+            );
             resolver_builder = builder;
 
             transfer::public_transfer(admin_cap, alice);
@@ -45,7 +52,7 @@ module sas::blocklist_tests {
         test_scenario::next_tx(&mut scenario, alice);
         {
             let mut attestation_registry = test_scenario::take_shared<AttestationRegistry>(&scenario);
-            let mut schema_record = test_scenario::take_shared<SchemaRecord>(&scenario);
+            let mut schema_record = test_scenario::take_shared<Schema>(&scenario);
             let admin_cap = test_scenario::take_from_sender<Admin>(&scenario);
 
             blocklist::add(&schema_record, &mut resolver_builder, test_scenario::ctx(&mut scenario));
@@ -76,18 +83,18 @@ module sas::blocklist_tests {
             );
 
             test_scenario::return_shared<AttestationRegistry>(attestation_registry);
-            test_scenario::return_shared<SchemaRecord>(schema_record);
+            test_scenario::return_shared<Schema>(schema_record);
             transfer::public_transfer(admin_cap, alice);
             clock::share_for_testing(clock);
         };
 
         test_scenario::next_tx(&mut scenario, bob);
         {
-            let schema_record = test_scenario::take_shared<SchemaRecord>(&scenario);
+            let schema_record = test_scenario::take_shared<Schema>(&scenario);
             let attestation = test_scenario::take_from_sender<Attestation>(&scenario);
-            assert!(sas::schema(&attestation) == schema_record.addy());
+            assert!(attestation::schema(&attestation) == schema_record.addy());
 
-            test_scenario::return_shared<SchemaRecord>(schema_record);
+            test_scenario::return_shared<Schema>(schema_record);
             test_scenario::return_to_sender<Attestation>(&scenario, attestation);
         };
 

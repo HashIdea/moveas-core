@@ -45,17 +45,18 @@ module sas::schema_registry {
     }
 
     // === Public-Mutative Functions ===
-    public fun registry(
+
+    // === Public-Package Functions ===
+    public(package) fun registry(
         self: &mut SchemaRegistry,
         schema_record: address,
-        ctx: &mut TxContext
+        ctx: &TxContext
     ) {
         let inner = self.load_inner_mut();
         assert!(!inner.schema_records.contains(schema_record), ESchmaAlreadyExist);
         table::add(&mut inner.schema_records, schema_record, ctx.sender());
     }
 
-    // === Public-Package Functions ===
     public(package) fun load_inner_mut(self: &mut SchemaRegistry): &mut RegistryInner {
         let inner: &mut RegistryInner = versioned::load_value_mut(&mut self.inner);
         let package_version = constants::current_version();
