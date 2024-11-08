@@ -19,6 +19,7 @@ module sas::sas {
     const EExpired: u64 = 0;
     const ERefIdNotFound: u64 = 1;
     const EHasResolver: u64 = 2;
+    const EInvalidLength: u64 = 3;
 
     // === Constants ===
     const ATT_TYPE_ATTEST: u8 = 0;
@@ -63,6 +64,45 @@ module sas::sas {
             revokable, 
             ctx
         )
+    }
+
+    public fun attest_multi(
+        schema_record: &mut Schema,
+        attestation_registry: &mut AttestationRegistry,
+        ref_attestation_vec: vector<address>,
+        recipients_vec: vector<address>,
+        expiration_times_vec: vector<u64>,
+        datas_vec: vector<vector<u8>>,
+        names_vec: vector<vector<u8>>,
+        descriptions_vec: vector<vector<u8>>,
+        urls_vec: vector<vector<u8>>,
+        time: &Clock,
+        ctx: &mut TxContext
+    ) {
+        let len = vector::length(&recipients_vec);
+        assert!(len == vector::length(&ref_attestation_vec), EInvalidLength);
+        assert!(len == vector::length(&expiration_times_vec), EInvalidLength);
+        assert!(len == vector::length(&datas_vec), EInvalidLength);
+        assert!(len == vector::length(&names_vec), EInvalidLength);
+        assert!(len == vector::length(&descriptions_vec), EInvalidLength);
+        assert!(len == vector::length(&urls_vec), EInvalidLength);
+        let mut i = 0;
+        while (i < len) {
+            attest(
+                schema_record, 
+                attestation_registry, 
+                ref_attestation_vec[i], 
+                recipients_vec[i], 
+                expiration_times_vec[i], 
+                datas_vec[i], 
+                names_vec[i], 
+                descriptions_vec[i], 
+                urls_vec[i], 
+                time, 
+                ctx
+            );
+            i = i + 1;
+        };
     }
 
     public fun attest(
@@ -151,6 +191,21 @@ module sas::sas {
         );
 
         attestation_registry.registry(attestation_address, schema_record.addy());
+    }
+
+    public fun revoke_multi(
+        admin: &Admin,
+        attestation_registry: &mut AttestationRegistry,
+        schema_record: &Schema,
+        attestation_vec: vector<address>,
+        ctx: &mut TxContext
+    ) {
+        let len = vector::length(&attestation_vec);
+        let mut i = 0;
+        while (i < len) {
+            revoke(admin, attestation_registry, schema_record, attestation_vec[i], ctx);
+            i = i + 1;
+        };
     }
 
     public fun revoke(
