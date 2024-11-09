@@ -1,3 +1,4 @@
+#[allow(lint(custom_state_change))]
 module sas::schema {
     // === Imports ===
     use std::{
@@ -209,7 +210,7 @@ module sas::schema {
         url: vector<u8>,
         revokable: bool,
         ctx: &mut TxContext,
-    ): (ResolverBuilder, Admin) {
+    ): (ResolverBuilder, Admin, Schema) {
         let schema_record = Schema {
             id: object::new(ctx),
             name: string::utf8(name),
@@ -227,12 +228,13 @@ module sas::schema {
         let admin_cap = admin::new(schema_record.addy(), ctx);
         let resolver_builder = new_resolver_builder(&admin_cap, &schema_record, ctx);
 
-        let admin_address = object::id_address(&schema_record);
+        let admin_address = object::id_address(&admin_cap);
+        let schema_address = schema_record.addy();
 
         emit(
             SchemaCreated {
                 event_type: 1,
-                schema_address: schema_record.addy(),
+                schema_address: schema_address,
                 name: schema_record.name,
                 description: schema_record.description,
                 url: schema_record.url,
@@ -244,12 +246,18 @@ module sas::schema {
             }
         );
         
-        transfer::share_object(schema_record);
+        // transfer::share_object(schema_record);
         
         (
             resolver_builder,
-            admin_cap
+            admin_cap,
+            schema_record
         )
+    }
+
+    #[allow(lint(share_owned))]
+    public fun share_schema(self: Schema) {
+        transfer::share_object(self);
     }
 
     public fun add_resolver(

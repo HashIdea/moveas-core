@@ -145,7 +145,7 @@ module sas::sas_tests {
         test_scenario::next_tx(&mut scenario, admin);
         {
             let mut schema_registry = test_scenario::take_shared<SchemaRegistry>(&scenario);
-            let (builder, admin_cap) = sas::register_schema_with_resolver(
+            let (builder, admin_cap, schema_record) = sas::register_schema_with_resolver(
                 &mut schema_registry, 
                 schema, 
                 name, 
@@ -154,6 +154,7 @@ module sas::sas_tests {
                 false, 
                 test_scenario::ctx(&mut scenario)
             );
+            schema_record.share_schema();
 
             resolver_builder = builder;
             transfer::public_transfer(admin_cap, admin);

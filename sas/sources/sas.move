@@ -54,7 +54,7 @@ module sas::sas {
         url: vector<u8>,
         revokable: bool,
         ctx: &mut TxContext,
-    ): (ResolverBuilder, Admin) {
+    ): (ResolverBuilder, Admin, Schema) {
         schema::new_with_resolver(
             schema_registry, 
             schema, 

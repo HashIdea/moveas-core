@@ -112,8 +112,6 @@ module sas::attestation {
             url,
         };
 
-
-
         let attestation_address = object::id_address(&attest);
         
         emit(AttestationCreated {
