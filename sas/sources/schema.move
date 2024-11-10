@@ -260,6 +260,7 @@ module sas::schema {
         transfer::share_object(self);
     }
 
+    // Todo: Should add Admin Cap to this function?
     public fun add_resolver(
         schema_record: &mut Schema,
         resolver_builder: ResolverBuilder

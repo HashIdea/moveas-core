@@ -49,10 +49,10 @@ module resolver_example::schema_resolver {
   }
 
   fun resolve_revoke(data: vector<u8>): option::Option<u128> {
-    let (revoker, schema_address, attestation) = resolver_storage::unpack_revoke_data(data);
+    let (_revoker, schema_address, attestation) = resolver_storage::unpack_revoke_data(data);
     assert!(schema_address != @0x0, error::invalid_argument(EINVALID_ARGUMENT));
     assert!(attestation != @0x0, error::invalid_argument(EINVALID_ARGUMENT));
-    assert!(revoker == @0xcafe, error::invalid_argument(EINVALID_ARGUMENT));
+    // assert!(revoker == @0xcafe, error::invalid_argument(EINVALID_ARGUMENT));
 
     option::some(0)
   }

@@ -4,7 +4,7 @@ version = "1.0.0"
 authors = []
 
 [addresses]
-aas = "0xf5e99cb87f30d1c51ccfbdfc90a8bdfba2c26165cdbf5544762f01086683edef"
+aas = "0x22b0020431434625e70a4ffce67ecf8a7e83712df325fbaa69164ee6439a5f6d"
 resolver_example = "_"
 
 [dev-addresses]
