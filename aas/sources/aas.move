@@ -6,7 +6,7 @@ module aas::aas {
 
     use aas::schema;
     use aas::attestation;
-    use aas::resolver_dispatcher;
+    // use aas::resolver_dispatcher;
     
     /*********** Error Codes ***********/
     
@@ -105,10 +105,10 @@ module aas::aas {
         assert!(attestation::attestation_exists(attestation), error::invalid_argument(EATTESTATION_NOT_FOUND));
         let resolver = schema::schema_resolver(schema_addr);
         if (resolver != @0x0) {
-            assert!(
-                resolver_dispatcher::on_revoke(resolver, admin_addr, schema_addr, attestation),
-                error::unauthenticated(ERESOLVE_FAILED)
-            );
+            // assert!(
+            //     resolver_dispatcher::on_revoke(resolver, admin_addr, schema_addr, attestation),
+            //     error::unauthenticated(ERESOLVE_FAILED)
+            // );
         };
         
         assert!(admin_addr == schema::schema_creator(schema_addr), error::invalid_argument(ENOT_SCHEMA_CREATOR));
@@ -148,10 +148,10 @@ module aas::aas {
         assert!(schema::schema_exists(schema_addr), error::invalid_argument(ESCHEMA_NOT_FOUND));
         let resolver = schema::schema_resolver(schema_addr);
         if (resolver != @0x0) {
-            assert!(
-                resolver_dispatcher::on_attest(resolver, signer::address_of(attestor), recipient, schema_addr, ref_attestation, expiration_time, revokable, data),
-                error::unauthenticated(ERESOLVE_FAILED)
-            );
+            // assert!(
+            //     resolver_dispatcher::on_attest(resolver, signer::address_of(attestor), recipient, schema_addr, ref_attestation, expiration_time, revokable, data),
+            //     error::unauthenticated(ERESOLVE_FAILED)
+            // );
         };
         
         attestation::create_attestation(signer::address_of(attestor), recipient, schema_addr, ref_attestation, expiration_time, revokable, data)

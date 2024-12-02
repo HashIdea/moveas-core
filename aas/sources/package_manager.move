@@ -7,8 +7,8 @@ module aas::package_manager {
     friend aas::schema;
     friend aas::attestation;
     friend aas::aas;
-    friend aas::resolver_storage;
-    friend aas::resolver_dispatcher;
+    // friend aas::resolver_storage;
+    // friend aas::resolver_dispatcher;
 
     /// Stores permission config such as ExtendRef for controlling the object.
     struct PermissionConfig has key {
