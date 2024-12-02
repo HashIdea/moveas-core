@@ -36,6 +36,10 @@ module sas::attestation_registry {
         attestations_status: Table<address, Status>,
     }
 
+    public struct AttestationRegistryAdminCap has key, store {
+        id: UID,
+    }
+
     // === Init Function ===
     fun init(_otw: ATTESTATION_REGISTRY, ctx: &mut TxContext) {
         let registry_inner = RegistryInner {
@@ -52,9 +56,25 @@ module sas::attestation_registry {
         };
 
         transfer::share_object(attestation_registry);
+
+        transfer::public_transfer(
+            AttestationRegistryAdminCap { 
+                id: object::new(ctx) 
+            }, 
+            ctx.sender()
+        );
     }
 
     // === Public-Mutative Functions ===
+
+    public fun update_allowed_versions(
+        _admin_cap: &mut AttestationRegistryAdminCap,
+        attestation_registry: &mut AttestationRegistry, 
+        allowed_versions: VecSet<u64>
+    ) {
+        let inner = attestation_registry.load_inner_mut();
+        inner.allowed_versions = allowed_versions;
+    }
 
     // === Public-Package Functions ===
     

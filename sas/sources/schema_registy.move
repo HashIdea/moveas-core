@@ -26,6 +26,10 @@ module sas::schema_registry {
         schema_records: Table<address, address>,
     }
 
+    public struct SchemaRegistryAdminCap has key, store {
+        id: UID,
+    }
+
     // === Init Function ===
     fun init(_otw: SCHEMA_REGISTRY, ctx: &mut TxContext) {
         let registry_inner = RegistryInner {
@@ -42,9 +46,24 @@ module sas::schema_registry {
         };
 
         transfer::share_object(schema_registry);
+        
+        transfer::public_transfer(
+            SchemaRegistryAdminCap { 
+                id: object::new(ctx) 
+            }, 
+            ctx.sender()
+        );
     }
 
     // === Public-Mutative Functions ===
+    public fun update_allowed_versions(
+        _admin_cap: &mut SchemaRegistryAdminCap,
+        schema_registry: &mut SchemaRegistry, 
+        allowed_versions: VecSet<u64>
+    ) {
+        let inner = schema_registry.load_inner_mut();
+        inner.allowed_versions = allowed_versions;
+    }
 
     // === Public-Package Functions ===
     public(package) fun registry(
