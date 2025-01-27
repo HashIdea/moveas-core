@@ -10,6 +10,9 @@ module resolvers::blocklist {
     const EInvalideSchemaAddress: u64 = 0;
     const EBlocked: u64 = 1;
 
+    // === Constants ===
+    const BLOCKLIST_RESOLVER: vector<u8> = b"blocklist";
+
     // === Structs ===
     public struct BlocklistResolver has drop {}
 
@@ -24,6 +27,8 @@ module resolvers::blocklist {
     public fun add(schema_record: &Schema, resolver_builder: &mut ResolverBuilder, ctx: &mut TxContext) {
         assert!(schema_record.addy() == resolver_builder.schema_address_from_builder(), EInvalideSchemaAddress);
 
+        resolver_builder.add_resolver_module(BLOCKLIST_RESOLVER);
+        resolver_builder.add_resolver_address(@resolvers);
         resolver_builder.add_rule(schema::start_attest_name().utf8(), BlocklistResolver {});
         resolver_builder.add_rule_config(BlocklistResolver {}, Blocklist { inner: table::new(ctx) });
     }
