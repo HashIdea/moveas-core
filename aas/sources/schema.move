@@ -92,11 +92,11 @@ module aas::schema {
         });
 
         let schema_object = object::object_from_constructor_ref<Schema>(&constructor_ref);
-        // add_schema_to_registry(schema_object);
+        let schema_address = object::object_address<Schema>(&schema_object);
         
         event::emit(
             SchemaCreated {
-                schema_address: object::object_address<Schema>(&schema_object),
+                schema_address: schema_address,
                 name: name,
                 description: description,
                 url: url,
@@ -108,7 +108,7 @@ module aas::schema {
             }
         );
 
-        object::object_address<Schema>(&schema_object)
+        schema_address
     }
 
     /*********** View Functions ***********/
