@@ -103,6 +103,10 @@ module aas::aas {
         let admin_addr = signer::address_of(admin);
         assert!(schema::schema_exists(schema_addr), error::invalid_argument(ESCHEMA_NOT_FOUND));
         assert!(attestation::attestation_exists(attestation), error::invalid_argument(EATTESTATION_NOT_FOUND));
+        assert!(admin_addr == schema::schema_creator(schema_addr), error::invalid_argument(ENOT_SCHEMA_CREATOR));
+        assert!(schema::schema_revokable(schema_addr), error::invalid_argument(E_NOT_REVOKABLE));
+        assert!(!attestation::attestation_revoked(attestation), error::invalid_argument(EATTESTATION_ALREADY_REVOKED));
+        
         let resolver = schema::schema_resolver(schema_addr);
         if (resolver != @0x0) {
             assert!(
@@ -110,9 +114,6 @@ module aas::aas {
                 error::unauthenticated(ERESOLVE_FAILED)
             );
         };
-        
-        assert!(admin_addr == schema::schema_creator(schema_addr), error::invalid_argument(ENOT_SCHEMA_CREATOR));
-        assert!(schema::schema_revokable(schema_addr), error::invalid_argument(E_NOT_REVOKABLE));
 
         attestation::revoke_attestation(attestation);
     }

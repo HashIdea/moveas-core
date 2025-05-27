@@ -1,7 +1,6 @@
 module aas::attestation {
     use std::bcs;
     use std::vector;
-    use std::debug;
 
     use aptos_framework::event;
     use aptos_framework::object;
@@ -91,10 +90,11 @@ module aas::attestation {
         });
 
         let attestation_object = object::object_from_constructor_ref<Attestation>(&constructor_ref);
+        let attestation_address = object::object_address<Attestation>(&attestation_object);
         
         event::emit(
             AttestationCreated {
-                attestation_address: object::object_address<Attestation>(&attestation_object),
+                attestation_address: attestation_address,
                 schema: schema_addr,
                 ref_attestation: ref_attestation,
                 time: now,
@@ -106,13 +106,12 @@ module aas::attestation {
             }
         );
 
-        object::object_address<Attestation>(&attestation_object)
+        attestation_address
     }
 
     public(friend) fun revoke_attestation(attestation_address: address) acquires Attestation {
         let attestation = unchecked_mut_attestation(attestation_address);
         attestation.revocation_time = timestamp::now_seconds();
-        debug::print(&attestation.revocation_time);
 
         event::emit(
             AttestationRevoked {
@@ -169,6 +168,12 @@ module aas::attestation {
     #[view]
     public fun attestation_exists(attestation_address: address): bool {
         exists<Attestation>(attestation_address)
+    }
+
+    #[view]
+    public fun attestation_revoked(attestation_address: address): bool acquires Attestation {
+        let attestation = get_attestation(attestation_address);
+        attestation.revocation_time != 0
     }
 
     #[view]
