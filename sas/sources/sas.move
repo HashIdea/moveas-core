@@ -117,7 +117,7 @@ module sas::sas {
         url: vector<u8>,
         time: &Clock,
         ctx: &mut TxContext
-    ) {
+    ): address {
         assert!(!schema_record.has_resolver(), EHasResolver);
         if (ref_attestation != @0x0) {
             assert!(attestation_registry.is_exist(ref_attestation), ERefIdNotFound);
@@ -146,6 +146,7 @@ module sas::sas {
         );
 
         attestation_registry.registry(attestation_address, schema_record.addy());
+        attestation_address
     }
 
     public fun attest_with_resolver(
@@ -161,7 +162,7 @@ module sas::sas {
         time: &Clock,
         request: Request,
         ctx: &mut TxContext
-    ) {
+    ): address {
         if (ref_attestation != @0x0) {
             assert!(attestation_registry.is_exist(ref_attestation), ERefIdNotFound);
         };
@@ -172,7 +173,7 @@ module sas::sas {
             assert!(time.timestamp_ms() < expiration_time, EExpired);
         };
 
-        schema::finish_attest( schema_record, request);
+        schema::finish_attest(schema_record, request);
 
         let attestation_address = attestation::create_attestation(
             object::id_address(schema_record),
@@ -191,6 +192,7 @@ module sas::sas {
         );
 
         attestation_registry.registry(attestation_address, schema_record.addy());
+        attestation_address
     }
 
     public fun revoke_multi(
@@ -215,6 +217,22 @@ module sas::sas {
         attestation: address,
         ctx: &mut TxContext
     ) {
+        assert!(!schema_record.has_resolver(), EHasResolver);
+        attestation_registry.revoke(admin, schema_record, attestation, ctx);
+    }
+
+    public fun revoke_with_resolver(
+        admin: &Admin,
+        attestation_registry: &mut AttestationRegistry,
+        schema_record: &Schema,
+        attestation: address,
+        request: Request,
+        ctx: &mut TxContext
+    ) {
+        assert!(schema_record.has_resolver(), EHasResolver);
+
+        schema::finish_revoke(schema_record, request);
+
         attestation_registry.revoke(admin, schema_record, attestation, ctx);
     }
 }

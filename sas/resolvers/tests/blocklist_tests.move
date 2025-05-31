@@ -32,6 +32,7 @@ module resolvers::blocklist_tests {
         };
 
         let schema_address: address;
+        let attestation_address: address;
         test_scenario::next_tx(&mut scenario, alice);
         {
             let mut schema_registry = test_scenario::take_shared<SchemaRegistry>(&scenario);
@@ -41,7 +42,7 @@ module resolvers::blocklist_tests {
                 name, 
                 description, 
                 url, 
-                false, 
+                true, 
                 test_scenario::ctx(&mut scenario)
             );
             resolver_builder = builder;
@@ -52,6 +53,7 @@ module resolvers::blocklist_tests {
             test_scenario::return_shared<SchemaRegistry>(schema_registry);
         };
 
+        // Attest without resolver
         test_scenario::next_tx(&mut scenario, alice);
         {
             let mut attestation_registry = test_scenario::take_shared<AttestationRegistry>(&scenario);
@@ -72,7 +74,7 @@ module resolvers::blocklist_tests {
 
             let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
-            sas::attest_with_resolver(
+            attestation_address = sas::attest_with_resolver(
                 &mut schema_record,
                 &mut attestation_registry,
                 @0x0,
@@ -91,6 +93,38 @@ module resolvers::blocklist_tests {
             test_scenario::return_shared<Schema>(schema_record);
             transfer::public_transfer(admin_cap, alice);
             clock::share_for_testing(clock);
+        };
+
+        // Revoke with resolver
+        test_scenario::next_tx(&mut scenario, alice);
+        {
+            let mut attestation_registry = test_scenario::take_shared<AttestationRegistry>(&scenario);
+            let schema_record = test_scenario::take_shared<Schema>(&scenario);
+            let admin_cap = test_scenario::take_from_sender<Admin>(&scenario);
+
+            assert!(schema_record.addy() == schema_address);
+            assert!(attestation_registry.is_exist(attestation_address));
+            assert!(!attestation_registry.is_revoked(attestation_address));
+
+            let mut request = schema_record.start_revoke();
+            blocklist::approve(&schema_record, &mut request, test_scenario::ctx(&mut scenario));
+
+
+            sas::revoke_with_resolver(
+                &admin_cap,
+                &mut attestation_registry,
+                &schema_record,
+                attestation_address,
+                request,
+                test_scenario::ctx(&mut scenario)
+            );
+
+            assert!(attestation_registry.is_exist(attestation_address));
+            assert!(attestation_registry.is_revoked(attestation_address));
+
+            test_scenario::return_shared<AttestationRegistry>(attestation_registry);
+            test_scenario::return_shared<Schema>(schema_record);
+            transfer::public_transfer(admin_cap, alice);
         };
 
         test_scenario::next_tx(&mut scenario, bob);

@@ -30,6 +30,7 @@ module resolvers::whitelist {
         resolver_builder.add_resolver_address(@resolvers);
         resolver_builder.add_resolver_module(WHITELIST_RESOLVER);
         resolver_builder.add_rule(schema::start_attest_name().utf8(), WhitelistResolver {});
+        resolver_builder.add_rule(schema::start_revoke_name().utf8(), WhitelistResolver {});
         resolver_builder.add_rule_config(WhitelistResolver {}, Whitelist { inner: table::new(ctx) });
     }
 

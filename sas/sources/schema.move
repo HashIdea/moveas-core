@@ -40,6 +40,7 @@ module sas::schema {
 
     // ==== Constants ====
     const START_ATTEST: vector<u8> = b"START_ATTEST";
+    const START_REVOKE: vector<u8> = b"START_REVOKE";
 
     // ==== Structs ====
     
@@ -90,6 +91,18 @@ module sas::schema {
         self.confirm(request);
     }
 
+    public fun start_revoke(self: &Schema): Request {
+        assert!(self.has_resolver(), ENoResolver);
+        new_request(self, START_REVOKE.to_string())
+    }
+
+    public fun finish_revoke(self: &Schema, request: Request) {
+        assert!(self.has_resolver(), ENoResolver);
+        assert!(request.request_name() == START_REVOKE.to_string(), EMustBeFinishRequest);
+
+        self.confirm(request);
+    }
+
     public fun get_resolver_address(self: &Schema): address {
         if (self.has_resolver()) {
             option::borrow(&self.resolver).resolver_address
@@ -101,6 +114,10 @@ module sas::schema {
     // === Public-View Functions ===
     public fun start_attest_name(): vector<u8> {
         START_ATTEST
+    }
+
+    public fun start_revoke_name(): vector<u8> {
+        START_REVOKE
     }
 
     public fun schema(self: &Schema): vector<u8> {
@@ -312,6 +329,7 @@ module sas::schema {
         admin.assert_schema(schema_record.addy());
         let mut rules = vec_map::empty();
         rules.insert(START_ATTEST.to_string(), vec_set::empty());
+        rules.insert(START_REVOKE.to_string(), vec_set::empty());
 
         ResolverBuilder {
             schema_address: schema_record.addy(),

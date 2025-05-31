@@ -30,6 +30,7 @@ module resolvers::blocklist {
         resolver_builder.add_resolver_module(BLOCKLIST_RESOLVER);
         resolver_builder.add_resolver_address(@resolvers);
         resolver_builder.add_rule(schema::start_attest_name().utf8(), BlocklistResolver {});
+        resolver_builder.add_rule(schema::start_revoke_name().utf8(), BlocklistResolver {});
         resolver_builder.add_rule_config(BlocklistResolver {}, Blocklist { inner: table::new(ctx) });
     }
 
