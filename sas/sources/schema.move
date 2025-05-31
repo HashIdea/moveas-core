@@ -58,11 +58,15 @@ module sas::schema {
 
     public struct Resolver has store {
         rules: VecMap<String, VecSet<TypeName>>,
-        config: Bag
+        config: Bag,
+        resolver_address: address,
+        resolver_module: vector<u8>
     }
 
     public struct ResolverBuilder {
         schema_address: address,
+        resolver_address: address,
+        resolver_module: vector<u8>,
         rules: VecMap<String, VecSet<TypeName>>,
         config: Bag
     }
@@ -84,6 +88,14 @@ module sas::schema {
         assert!(request.request_name() == START_ATTEST.to_string(), EMustBeFinishRequest);
 
         self.confirm(request);
+    }
+
+    public fun get_resolver_address(self: &Schema): address {
+        if (self.has_resolver()) {
+            option::borrow(&self.resolver).resolver_address
+        } else {
+            @0x0
+        }
     }
 
     // === Public-View Functions ===
@@ -131,6 +143,14 @@ module sas::schema {
 
     public fun has_resolver(self: &Schema): bool {
         option::is_some(&self.resolver)
+    }
+
+    public fun resolver_address(self: &Schema): address {
+        option::borrow(&self.resolver).resolver_address
+    }
+
+    public fun resolver_module(self: &Schema): vector<u8> {
+        option::borrow(&self.resolver).resolver_module
     }
 
     public fun schema_address_from_request(request: &Request): address {
@@ -265,11 +285,13 @@ module sas::schema {
         schema_record: &mut Schema,
         resolver_builder: ResolverBuilder
     ) {
-        let ResolverBuilder { rules, config, schema_address } = resolver_builder;
+        let ResolverBuilder { rules, config, schema_address, resolver_address, resolver_module } = resolver_builder;
         assert!(object::id_address(schema_record) == schema_address, EWrongSchemaAddress);
         schema_record.resolver.fill(Resolver {
             rules: rules,
-            config: config
+            config: config,
+            resolver_address: resolver_address,
+            resolver_module: resolver_module
         });
     }
 
@@ -293,6 +315,8 @@ module sas::schema {
 
         ResolverBuilder {
             schema_address: schema_record.addy(),
+            resolver_address: @0x0,
+            resolver_module: vector::empty(),
             rules: rules,
             config: bag::new(ctx)
         }
@@ -334,6 +358,20 @@ module sas::schema {
         config: Config
     ) {
         resolver_builder.config.add(type_name::get<Rule>(), config);
+    }
+
+    public fun add_resolver_address(
+        resolver_builder: &mut ResolverBuilder,
+        resolver_address: address
+    ) {
+        resolver_builder.resolver_address = resolver_address;
+    }
+
+    public fun add_resolver_module(
+        resolver_builder: &mut ResolverBuilder,
+        resolver_module: vector<u8>
+    ) {
+        resolver_builder.resolver_module = resolver_module;
     }
 
     public fun config_mut<Rule: drop, Config: store>(

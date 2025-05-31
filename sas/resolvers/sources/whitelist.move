@@ -9,6 +9,9 @@ module resolvers::whitelist {
     // === Errors ===
     const EInvalideSchemaAddress: u64 = 0;
     const ENotWhitelisted: u64 = 1;
+
+    // === Constants ===
+    const WHITELIST_RESOLVER: vector<u8> = b"whitelist";
     
     // === Structs ===
     public struct WhitelistResolver has drop {}
@@ -24,6 +27,8 @@ module resolvers::whitelist {
     public fun add(schema_record: &Schema, resolver_builder: &mut ResolverBuilder, ctx: &mut TxContext) {
         assert!(schema_record.addy() == resolver_builder.schema_address_from_builder(), EInvalideSchemaAddress);
 
+        resolver_builder.add_resolver_address(@resolvers);
+        resolver_builder.add_resolver_module(WHITELIST_RESOLVER);
         resolver_builder.add_rule(schema::start_attest_name().utf8(), WhitelistResolver {});
         resolver_builder.add_rule_config(WhitelistResolver {}, Whitelist { inner: table::new(ctx) });
     }
